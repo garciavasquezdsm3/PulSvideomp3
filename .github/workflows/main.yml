@@ -1,54 +1,42 @@
-name: Build Signed Android APK
-
+name: Build Android APK
+ 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
+ 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        with:
+          # Evita que el token de GitHub se guarde en .git/config
+          persist-credentials: false
+ 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-
+          python-version: '3.12'
+ 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-
-      - name: Install Python tools & dependencies
+ 
+      - name: Install Flet
         run: |
           python -m pip install --upgrade pip
-          pip install flet yt-dlp certifi requests urllib3
-          # Instalamos los paquetes directamente en la raíz para garantizar que se incluyan en el bundle del APK
-          pip install -t . -r requirements.txt
-
+          pip install flet
+ 
+      # Las dependencias que van DENTRO del APK salen de requirements.txt.
+      # flet build las empaqueta solo; no hay que instalarlas con pip -t .
       - name: Build APK with Flet
         run: |
-          yes | flet build apk
-
-      - name: Sign APK
-        run: |
-          BUILD_PATH=$(find build/apk -name "*.apk" | head -n 1)
-          if [ -f "$BUILD_PATH" ]; then
-            echo "Firmando $BUILD_PATH"
-            keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-            $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-pass pass:android --ks-key-alias androiddebugkey --key-pass pass:android "$BUILD_PATH"
-          fi
-
+          flet build apk --yes --exclude .git .github
+ 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

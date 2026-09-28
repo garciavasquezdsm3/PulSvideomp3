@@ -23,9 +23,11 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      # Se configura la versión de Flutter que Flet requiere
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.24.0'
           channel: 'stable'
 
       - name: Install dependencies
@@ -33,12 +35,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet yt-dlp
 
-      # Compilación oficial corregida para Flet
+      # Forzamos la respuesta automática 'y' para evitar que Flet se quede esperando input
       - name: Build APK with Flet
         run: |
-          flet build apk
+          yes | flet build apk
 
-      # Firma digital del APK para permitir la instalación en Android 12/13/14/15
+      # Firma digital del APK para Android
       - name: Sign APK
         run: |
           BUILD_PATH=$(find build/apk -name "*.apk" | head -n 1)

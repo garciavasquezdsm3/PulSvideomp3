@@ -33,17 +33,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet yt-dlp
 
-      # Compilación oficial para Android
+      # Compilación oficial corregida para Flet
       - name: Build APK with Flet
         run: |
-          flet build apk --project-name PulSvideomp3 --no-analytics
+          flet build apk
 
-      # Firma del APK para garantizar la instalación en Android 12/13/14/15
+      # Firma digital del APK para permitir la instalación en Android 12/13/14/15
       - name: Sign APK
         run: |
           BUILD_PATH=$(find build/apk -name "*.apk" | head -n 1)
           if [ -f "$BUILD_PATH" ]; then
-            echo "Signing $BUILD_PATH"
+            echo "Firmando $BUILD_PATH"
             keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
             $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks debug.keystore --ks-pass pass:android --ks-key-alias androiddebugkey --key-pass pass:android "$BUILD_PATH"
           fi
